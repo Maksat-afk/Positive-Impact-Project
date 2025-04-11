@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная | PIP{% endblock %}
+
+{% block content %}
+<h2>Добро пожаловать!</h2>
+<p>Positive Impact Project — платформа, объединяющая фонды, волонтёров и спонсоров.</p>
+
+<section>
+    <h3>Последние достижения</h3>
+    <ul>
+        <li>Фонд "Доброе дело" завершил проект по озеленению.</li>
+        <li>Волонтёр Алия выполнила 5 заданий!</li>
+        <li>Спонсор "IT Solutions" предоставил технику для онлайн-курсов.</li>
+    </ul>
+</section>
+
+<section>
+    <h3>Последние задания</h3>
+    {% for task in tasks %}
+    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+        <h4>{{ task.title }}</h4>
+        {% if task.image %}
+            <img src="{{ task.image.url }}" alt="Фото" style="max-width: 300px;">
+        {% endif %}
+        <p><strong>Описание:</strong> {{ task.description }}</p>
+        <p><strong>Ожидания от волонтёра:</strong> {{ task.expectations_volunteer }}</p>
+        <p><strong>Ожидания от спонсора:</strong> {{ task.expectations_sponsor }}</p>
+        <p><strong>Нужно волонтёров:</strong> {{ task.volunteers_required }}</p>
+        
+        {# Кнопка для волонтёров #}
+        {% if user.is_authenticated and user.role == 'volunteer' %}
+            {% if user not in task.volunteers.all %}
+                <form method="post" action="{% url 'accept_task' task.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Принять задание</button>
+                </form>
+            {% else %}
+                <p><strong>Вы уже приняли это задание</strong></p>
+            {% endif %}
+        {% endif %}
+
+        {# Кнопка для спонсоров #}
+        {% if user.is_authenticated and user.role == 'sponsor' %}
+            {% if user not in task.sponsors.all %}
+                <form method="post" action="{% url 'support_task' task.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Поддержать задание</button>
+                </form>
+            {% else %}
+                <p><strong>Вы уже поддержали это задание</strong></p>
+            {% endif %}
+        {% endif %}
+
+        {% if user.is_authenticated %}
+            <p><strong>Контакты:</strong> {{ task.contacts }}</p>
+        {% else %}
+            <p><em>Зарегистрируйтесь, чтобы увидеть контактные данные</em></p>
+        {% endif %}
+    </div>
+{% endfor %}
+</section>
+{% endblock %}
