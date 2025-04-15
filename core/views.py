@@ -7,10 +7,29 @@ from .forms import TaskForm
 from .forms import ReviewForm
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 
 def index(request):
     tasks = Task.objects.all().order_by('-created_at')
-    return render(request, 'index.html', {'tasks': tasks})
+
+    top_volunteers = User.objects.filter(role='volunteer') \
+        .annotate(num_accepted=Count('accepted_tasks')) \
+        .order_by('-num_accepted')[:3]
+
+    top_funds = User.objects.filter(role='fund') \
+        .annotate(num_tasks=Count('fund_tasks')) \
+        .order_by('-num_tasks')[:3]
+
+    top_sponsors = User.objects.filter(role='sponsor') \
+        .annotate(num_supported=Count('supported_tasks')) \
+        .order_by('-num_supported')[:3]
+
+    return render(request, 'index.html', {
+        'tasks': tasks,
+        'top_volunteers': top_volunteers,
+        'top_funds': top_funds,
+        'top_sponsors': top_sponsors,
+    })
 
 def register(request):
     if request.method == 'POST':
